@@ -39,9 +39,11 @@ function _Sprite(file)  {
 	this.y = 0;
 	this.width = 0;
 	this.height = 0;
+	this.originalWidth = 0;
+	this.originalHeight = 0;
 	_img.onload = function(){
-		_this.width = _canvas.width = _img.width;
-		_this.height = _canvas.height = _img.height;
+		_this.originalWidth = _this.width = _canvas.width = _img.width;
+		_this.originalHeight = _this.height = _canvas.height = _img.height;
 		_context.drawImage(_img,0,0);
 		vg_update();
 	}
@@ -54,9 +56,10 @@ function _Sprite(file)  {
 
 
 
-
+var now_max_id=0;
 function _bases(_this){
-	_this.id = new Date().getTime();
+	now_max_id ++;
+	_this.id = now_max_id;
 	_this.getX = function(){ return _this.x;}
 	_this.getY = function(){ return _this.y;}
 	_this.setPosition = function(_x,_y){
@@ -66,7 +69,8 @@ function _bases(_this){
 	}
 	
 	_this.setScale = function(f){
-		_this.context.scale(f,f);
+		_this.width = _this.originalWidth * f;
+		_this.height = _this.originalHeight * f;
 		vg_update();
 	}
 	
@@ -97,18 +101,26 @@ function _bases(_this){
 	_this.scale = function(f,sec,funcall){
 		if(scale_c==true)return;
 		scale_c = true;
-		var fdf = 100/(sec*(1000/jd));
+		var fdw = (_this.originalWidth*(f-1))/(sec*(1000));
+		var fdh = (_this.originalHeight*(f-1))/(sec*(1000));
+		_this.width = _this.originalWidth;
+		_this.height = _this.originalWidth;
 		
 		var i=0;
 		var k = window.setInterval(function(){
-			//_this.setScale(_this.x+fdx*jd);
-			//vg_update();
+			_this.width = _this.width+fdw*jd;
+			_this.height = _this.height+fdh*jd;
+			vg_update();
 			i+=jd;
 			if(i>sec*1000){
 				clearInterval(k);
-				
+				_this.width = _this.originalWidth*f;
+				_this.height = _this.originalHeight*f;
 				scale_c=false;
-				funcall();
+				if(funcall!=null){
+					funcall();
+
+				}
 			}
 		}, jd);
         return this;
@@ -160,20 +172,20 @@ var _vg_is_onTouch = false;
 vg.onTouchBegan = function(funcall){
 	bg_content.onmousedown = function(event){
 		_vg_is_onTouch = true;
-		funcall(event.offsetX,event.offsetY);
+		funcall(event.offsetX,bg_content.height - event.offsetY);
 	}
 } 
 vg.onTouchMoved = function(funcall){
 	bg_content.onmousemove = function(event){
 		if(_vg_is_onTouch == true){
-			funcall(event.offsetX,event.offsetY);
+			funcall(event.offsetX,bg_content.height - event.offsetY);
 		}
 	}
 }
 vg.onTouchEnded = function(funcall){
 	bg_content.onmouseup = function(event){
 		_vg_is_onTouch = false;
-		funcall(event.offsetX,event.offsetY);
+		funcall(event.offsetX,bg_content.height - event.offsetY);
 	}
 }
 
@@ -202,11 +214,11 @@ function vg_update(){
 		//alert(vg_all_sprite[i]);
 		var sp = vg_all_sprite[i];
 		if(sp.type=="bg"){
-			context.drawImage(sp.canvas,sp.x,sp.y);
+			context.drawImage(sp.canvas,sp.x,sp.y,sp.width,sp.height);
 		}else{
 			tmp_x = sp.x-(sp.width/2);
 			tmp_y = (bg_content.height-sp.y)-(sp.height/2);
-			context.drawImage(sp.canvas,tmp_x,tmp_y);
+			context.drawImage(sp.canvas,tmp_x,tmp_y,sp.width,sp.height);
 		}
 	}
 }
