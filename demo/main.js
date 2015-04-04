@@ -19,9 +19,8 @@ function isOver(){
 		if(matrix[i][6]!=0&&matrix[i][6].stata!=0){
 			vg.update(1000,function(){});
 			vg.clean();
-    		var size = cc.director.getWinSize();
 			var gamevoer = vg.addSprite("res/gameover.png");
-			gamevoer.setPosition(size.width / 2, size.height / 2)
+			gamevoer.setPosition(vg.getWidth() / 2, vg.getHeight() / 2)
 			_isOver = true;
 					
 			var __num =  vg.addLabelTTF('1000',55);
@@ -378,7 +377,24 @@ function vgInit(){
 			return;
 		}
 	});
-	
+	vg.onKeyDown(function(ew){
+		if(ew == 37){
+			allBoxLeft();
+			return;
+		}
+		if(ew == 39){
+			allBoxRight();
+			return;
+		}
+		if(ew == 32){
+			rotation();
+			return;
+		}
+		if(ew == 40){
+			mStata.to1();
+			return;
+		}
+	});
 	
 }
 

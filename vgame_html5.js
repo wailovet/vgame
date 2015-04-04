@@ -1,7 +1,15 @@
 var vg = new Object;
 var bg_content;
+
 window.onload = function(){
 	vgInit();
+}
+
+vg.getWidth = function(){
+	return bg_content.width;
+}
+vg.getHeight = function(){
+	return bg_content.height;
 }
 vg.bg = function(bgfile,vg_divid){
 	bg_content=document.getElementById(vg_divid);
@@ -18,13 +26,49 @@ vg.addSprite = function(file){
 	vg_all_sprite.push(sprite);
 	return sprite;
 }
-vg.addLabelTTF = function(text,size,family){
-    var sprite = new _Sprite("H");
-	vg_all_sprite.push(sprite);
-	sprite.setText = function(){
-		
+vg.addLabelTTF = function(text,size,family,color){
+
+    family=(family!='')?family:"微软雅黑";
+    size=(size!='')?size:24;
+    color=(color!=null)?color:"#ffffff";
+    var labelTTF = new _LabelTTF(text,size,family,color);
+	vg_all_sprite.push(labelTTF);
+	return labelTTF;
+}
+
+function _LabelTTF(text,size,family,color){
+	var _this = this;
+	var _canvas = this.canvas = document.createElement('canvas');
+    var _context = this.context = this.canvas.getContext('2d');
+    this.type = "LabelTTF";
+	this.x = 0;
+	this.y = 0;
+	this.height = size;
+
+	this.size = size;
+
+    color=(color!='')?color:"#ffffff";
+
+
+
+	_canvas.height = bg_content.height;
+	_canvas.width = bg_content.width;
+	_context.fillStyle=color;
+	_context.font = size+"px "+family;
+
+
+	
+	this.setText = function(text){
+		_context.clearRect(0,0,_canvas.width,_canvas.height);
+		var metrics = _context.measureText(text);
+		_this.width = metrics.width;
+		_context.fillText(text,0,_this.size/1.2);
+
+		vg_update();
 	}
-	return sprite;
+	_bases(this);
+	this.setText(text);
+
 }
 
 
@@ -161,21 +205,34 @@ vg.log = function(s){
 	//cc.log(s);
 }
 vg.setData = function(key,val){
-	//localStorage.setItem(key,val);
+	localStorage.setItem(key,val);
 }
 vg.getData = function(key){
-	//return localStorage.getItem(key);
-	return null;
+	return localStorage.getItem(key);
 }
 //全局点击事件
 var _vg_is_onTouch = false;
 vg.onTouchBegan = function(funcall){
+
+	bg_content.addEventListener('touchstart',touchStart, false);
+	function touchStart (event){
+ 		var touch = event.touches[0];
+		_vg_is_onTouch = true;
+		funcall(touch.pageX,bg_content.height - touch.pageY);
+	}
+
 	bg_content.onmousedown = function(event){
 		_vg_is_onTouch = true;
 		funcall(event.offsetX,bg_content.height - event.offsetY);
 	}
 } 
 vg.onTouchMoved = function(funcall){
+	bg_content.addEventListener('touchmove',touchMove, false);
+	function touchMove (event){
+ 		var touch = event.touches[0];
+		_vg_is_onTouch = true;
+		funcall(touch.pageX,bg_content.height - touch.pageY);
+	}
 	bg_content.onmousemove = function(event){
 		if(_vg_is_onTouch == true){
 			funcall(event.offsetX,bg_content.height - event.offsetY);
@@ -183,11 +240,36 @@ vg.onTouchMoved = function(funcall){
 	}
 }
 vg.onTouchEnded = function(funcall){
+	bg_content.addEventListener('touchend',touchEnd, false);
+	function touchEnd (event){
+ 		var touch = event.touches[0];
+		_vg_is_onTouch = true;
+		funcall(touch.pageX,bg_content.height - touch.pageY);
+	}
 	bg_content.onmouseup = function(event){
 		_vg_is_onTouch = false;
 		funcall(event.offsetX,bg_content.height - event.offsetY);
 	}
 }
+//键盘事件
+vg.onKeyDown = function(funcall){
+	vg.doKeyDown = funcall;
+}
+window.onkeydown= function(){
+	if(vg.doKeyDown!=null){
+		vg.doKeyDown(event.which);
+	}
+}
+
+vg.onKeyUp = function(funcall){
+	vg.doKeyUp = funcall;
+}
+window.onkeyup= function(){
+	if(vg.doKeyUp!=null){
+		vg.doKeyUp(event.which);
+	}
+}
+
 
 var _vg_update = 0;
 vg.update = function(interval,funcall){
@@ -218,10 +300,23 @@ function vg_update(){
 		}else{
 			tmp_x = sp.x-(sp.width/2);
 			tmp_y = (bg_content.height-sp.y)-(sp.height/2);
-			context.drawImage(sp.canvas,tmp_x,tmp_y,sp.width,sp.height);
+			if (sp.type == "sprite") {
+				context.drawImage(sp.canvas,tmp_x,tmp_y,sp.width,sp.height);
+			}else{
+				context.drawImage(sp.canvas,tmp_x,tmp_y);
+			}
 		}
 	}
 }
+
+vg.clean = function(){	
+	var context = bg_content.getContext('2d');
+	context.clearRect(0,0,bg_content.width,bg_content.height);
+	vg_all_sprite.splice(0,vg_all_sprite.length);
+	vg_update();
+}
+
+
 function vg_setOnTouchListents(){
 	var context = bg_content.getContext('2d');
 	var tmp_x,tmp_y;
