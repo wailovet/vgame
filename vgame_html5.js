@@ -210,47 +210,50 @@ vg.setData = function(key,val){
 vg.getData = function(key){
 	return localStorage.getItem(key);
 }
-//全局点击事件
-var _vg_is_onTouch = false;
+//全局触摸事件
 vg.onTouchBegan = function(funcall){
-
-	bg_content.addEventListener('touchstart',touchStart, false);
+	window.addEventListener('touchstart',touchStart, true);
 	function touchStart (event){
  		var touch = event.touches[0];
-		_vg_is_onTouch = true;
 		funcall(touch.pageX,bg_content.height - touch.pageY);
+		event.preventDefault();
 	}
 
-	bg_content.onmousedown = function(event){
-		_vg_is_onTouch = true;
-		funcall(event.offsetX,bg_content.height - event.offsetY);
-	}
 } 
 vg.onTouchMoved = function(funcall){
-	bg_content.addEventListener('touchmove',touchMove, false);
+	window.addEventListener('touchmove',touchMove, true);
 	function touchMove (event){
  		var touch = event.touches[0];
-		_vg_is_onTouch = true;
 		funcall(touch.pageX,bg_content.height - touch.pageY);
-	}
-	bg_content.onmousemove = function(event){
-		if(_vg_is_onTouch == true){
-			funcall(event.offsetX,bg_content.height - event.offsetY);
-		}
+		event.preventDefault();
 	}
 }
 vg.onTouchEnded = function(funcall){
-	bg_content.addEventListener('touchend',touchEnd, false);
+	window.addEventListener('touchend',touchEnd, false);
 	function touchEnd (event){
- 		var touch = event.touches[0];
-		_vg_is_onTouch = true;
+ 		var touch = event.changedTouches[0];
 		funcall(touch.pageX,bg_content.height - touch.pageY);
+		event.preventDefault();
+
 	}
-	bg_content.onmouseup = function(event){
-		_vg_is_onTouch = false;
+}
+//鼠标事件
+vg.onMouseDown = function (funcall){
+	bg_content.onmousedown = function(event){
 		funcall(event.offsetX,bg_content.height - event.offsetY);
 	}
 }
+vg.onMouseMove = function (funcall){
+	bg_content.onmousemove = function(event){
+		funcall(event.offsetX,bg_content.height - event.offsetY);
+	}
+}
+vg.onMouseUp = function (funcall){
+	bg_content.onmouseup = function(event){
+		funcall(event.offsetX,bg_content.height - event.offsetY);
+	}
+}
+
 //键盘事件
 vg.onKeyDown = function(funcall){
 	vg.doKeyDown = funcall;
