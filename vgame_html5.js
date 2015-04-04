@@ -210,33 +210,45 @@ vg.setData = function(key,val){
 vg.getData = function(key){
 	return localStorage.getItem(key);
 }
-//全局触摸事件
-vg.onTouchBegan = function(funcall){
-	window.addEventListener('touchstart',touchStart, true);
-	function touchStart (event){
- 		var touch = event.touches[0];
-		funcall(touch.pageX,bg_content.height - touch.pageY);
-		event.preventDefault();
-	}
 
-} 
+
+//触摸事件
+vg.__doTouchBegan = function(){}
+window.addEventListener('touchstart',__TouchStart, true);
+function __TouchStart (event){
+	var touch = event.touches[0];
+	vg.__doTouchBegan(touch.pageX,bg_content.height - touch.pageY);
+	//event.preventDefault();
+}
+vg.onTouchBegan = function(funcall){
+	vg.__doTouchBegan = funcall;
+}
+
+//触摸划动
+vg.__doTouchMove = function(){}
+window.addEventListener('touchmove',__TouchMove, true);
+function __TouchMove (event){
+	var touch = event.touches[0];
+	vg.__doTouchMove(touch.pageX,bg_content.height - touch.pageY);
+	event.preventDefault();
+}
 vg.onTouchMoved = function(funcall){
-	window.addEventListener('touchmove',touchMove, true);
-	function touchMove (event){
- 		var touch = event.touches[0];
-		funcall(touch.pageX,bg_content.height - touch.pageY);
-		event.preventDefault();
-	}
+	vg.__doTouchMove = funcall;
+}
+
+
+//触摸结束
+vg.__doTouchEnd = function(){}
+window.addEventListener('touchend',__TouchEnd, true);
+function __TouchEnd (event){
+ 	var touch = event.changedTouches[0];
+	vg.__doTouchEnd(touch.pageX,bg_content.height - touch.pageY);
+	//event.preventDefault();
 }
 vg.onTouchEnded = function(funcall){
-	window.addEventListener('touchend',touchEnd, false);
-	function touchEnd (event){
- 		var touch = event.changedTouches[0];
-		funcall(touch.pageX,bg_content.height - touch.pageY);
-		event.preventDefault();
-
-	}
+	vg.__doTouchEnd = funcall;
 }
+
 //鼠标事件
 vg.onMouseDown = function (funcall){
 	bg_content.onmousedown = function(event){
