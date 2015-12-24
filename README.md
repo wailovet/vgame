@@ -20,7 +20,7 @@
 
 ## 文档
 
-[Wiki](https://github.com/overtrue/wechat/wiki)
+[Wiki](https://github.com/wailovet/vgame/wiki)
 
 ## 目录
 
