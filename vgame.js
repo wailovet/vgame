@@ -2,21 +2,21 @@
     window.Vg = function (initFun) {
 
         var _ready = initFun;
-        this.ready = function(initFun){
+        this.ready = function (initFun) {
             _ready = initFun;
         }
         var _old_window_onload = window.onload;
-        window.onload = function(){
-            if(_old_window_onload){
+        window.onload = function () {
+            if (_old_window_onload) {
                 _old_window_onload();
             }
-            if(_ready){
+            if (_ready) {
                 _ready(this);
             }
         }
 
 
-        var bg_content;
+        var bg_content = null;
         var _vg_update = 0;
         var vg_all_sprite_count = 0;
         var vg_all_sprite = Array();
@@ -82,6 +82,7 @@
             _bases(this);
         };
         function _bases(_this) {
+
             now_max_id++;
             _this.id = now_max_id;
             _this.getX = function () {
@@ -176,12 +177,9 @@
             }
 
 
-//	_this.add = function(file){
-//
-//		var s = new cc.Sprite(file);
-//		s.setAnchorPoint(0,0);
-//		this.ccmain.addChild(s);
-//	}
+            //	_this.add = function(file){
+            //
+            //	}
 
         }
 
@@ -243,10 +241,15 @@
             }, true);
         }
 
+        function checkIsInit() {
+            if (!run_dom_id || !run_width || !run_height) {
+                throw "Init error : v.initDom('id').initSize(800,600).run();";
+            }
+        }
+
         window.addEventListener('touchstart', __TouchStart, true);
         window.addEventListener('touchmove', __TouchMove, true);
         window.addEventListener('touchend', __TouchEnd, true);
-
 
 
         var doKeyDown = null;
@@ -269,23 +272,52 @@
         this.getHeight = function () {
             return bg_content.height;
         }
-        this.bg = function (bgfile, vg_divid) {
-            bg_content = document.getElementById(vg_divid);
 
-            var context = bg_content.getContext('2d');
 
+        this.initDom = function (dom_id) {
+            run_dom_id = dom_id;
+            return this;
+        }
+        this.initSize = function (p_width, p_height) {
+            run_width = p_width;
+            run_height = p_height;
+            return this;
+        }
+        this.initZoom = function (is_zoom) {
+            run_zoom = is_zoom;
+            return this;
+        }
+        var run_dom_id = null, run_width = null, run_height = null, run_zoom = false;
+        this.run = function () {
+            checkIsInit();
+
+            bg_content = document.getElementById(run_dom_id);
+            if (!bg_content) {
+                throw "'#" + run_dom_id + "' Not Found";
+            }
+            bg_content.width = run_width;
+            bg_content.height = run_height;
+            if (run_zoom) {
+                bg_content.style.width = '100%';
+                bg_content.style.height = '100%';
+            }
             vg_setOnTouchListents();
+            return this;
+        }
+        this.background = function (bgfile) {
             var _bg = this.addSprite(bgfile);
             _bg.type = "bg";
         }
 
         this.addSprite = function (file) {
+            checkIsInit();
+
             var sprite = new _Sprite(file);
             vg_all_sprite.push(sprite);
             return sprite;
         }
         this.addLabelTTF = function (text, size, family, color) {
-
+            checkIsInit();
             family = (family != '') ? family : "微软雅黑";
             size = (size != '') ? size : 24;
             color = (color != null) ? color : "#ffffff";
@@ -295,7 +327,7 @@
         }
 
         this.log = function (s) {
-            console.log("vgame["+(new Date()).toLocaleString()+"]["+s+"]");
+            console.log("vgame[" + (new Date()).toLocaleString() + "][" + s + "]");
         }
         this.setData = function (key, val) {
             localStorage.setItem(key, val);
@@ -327,7 +359,7 @@
             __doTouchEnd = funcall;
         }
 
-//鼠标事件
+        //鼠标事件
         this.onMouseDown = function (funcall) {
             bg_content.onmousedown = function (event) {
                 funcall(event.offsetX, bg_content.height - event.offsetY);
@@ -344,7 +376,7 @@
             }
         }
 
-//键盘事件
+        //键盘事件
         this.onKeyDown = function (funcall) {
             doKeyDown = funcall;
         }
@@ -368,6 +400,7 @@
 
 
         this.clean = function () {
+            checkIsInit();
             var context = bg_content.getContext('2d');
             context.clearRect(0, 0, bg_content.width, bg_content.height);
             vg_all_sprite.splice(0, vg_all_sprite.length);
