@@ -1,3 +1,5 @@
+var vg = new Vg();
+vg.ready(gameInit);
 var bc = 17.2;
 var initHeight = 821+2*bc;
 var MAXX = 5;
@@ -30,7 +32,7 @@ function isOver(){
 				_isOver = false;;
 				
 				vg.clean();
-				vgInit();
+				gameInit();
 			});
 			return true;
 		}
@@ -147,7 +149,6 @@ mStata.toSatrt = function(type){
 mStata.to0 = function(){
 	
 	vg.update(0.5,function(){
-		vg.log("to0");
 		if(!isCanControl){
 			mStata.to1();
 		}
@@ -212,7 +213,7 @@ mStata.to1 = function(){
 			}
 		}
 		if(mStata_to3_bool && allBoxDown()){
-			if(!mStata.to2()){	
+			if(!mStata.to2()){
 				mStata.to3();
 			}else{
 				vg.log(isDjMove());
@@ -221,7 +222,7 @@ mStata.to1 = function(){
 					mStata.to3();
 					return;
 				}else{
-					mStata.toSatrt(GetRandomNum(0,3));	
+					mStata.toSatrt(GetRandomNum(0,3));
 				}
 			}
 		}
@@ -275,7 +276,6 @@ mStata.to2 = function(){
 //合并检测
 var mStata_to3_bool=true;
 mStata.to3 = function(isRecursion){
-		vg.log("to3");
 	if(!mStata_to3_bool)return;
 	
 	
@@ -328,8 +328,9 @@ mStata.to3 = function(isRecursion){
 
 
 var game_num_lable;
-function vgInit(){
+function gameInit(){
 	//vg.debug(true);
+	vg.log("s");
 	vg.bg('res/bg2.png','gameCanvas');
 	
 	game_num_lable = vg.addLabelTTF('0',31);
@@ -502,6 +503,7 @@ function allBoxDown(){
 
 
 
+var matrix;
 function addBox (num,x,y) {
 	if(!y)y=8;
 	var p2 = new Object;
@@ -591,22 +593,12 @@ function addBox (num,x,y) {
 	
 	
 }
-var matrix;
 
 
-
-
-var isInteger = function(number){
-    if(number % 1 <0.001||number % 1 >0.9){          //若number能被1整除
-        return true;            //则显示"是整数"
-    }else{                         //否则
-        return false;          //显示"不是整数"
-    }
-};
 
 
 function GetRandomNum(Min,Max){   
 var Range = Max - Min;   
 var Rand = Math.random();   
 return(Min + Math.round(Rand * Range));   
-} 
+}
