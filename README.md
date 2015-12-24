@@ -1,5 +1,8 @@
+#vgame
+一个简单的基于canvas的游戏框架
 
-##开始
+
+##使用
 
 ```html
     <script src="../vgame.js" type="text/javascript" charset="utf-8"></script>
