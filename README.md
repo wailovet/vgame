@@ -25,9 +25,12 @@
 ## 目录
 
 - [x] [使用/初始化](https://github.com/wailovet/vgame/wiki/初始化)
+- [x] [全局属性](https://github.com/wailovet/vgame/wiki/全局属性)
 - [x] [Sprite](https://github.com/wailovet/vgame/wiki/Sprite)
 - [x] [LabelTTF](https://github.com/wailovet/vgame/wiki/wiki/LabelTTF)
 - [x] [触摸事件](https://github.com/wailovet/vgame/wiki/wiki/触摸事件)
 - [x] [键盘事件](https://github.com/wailovet/vgame/wiki/wiki/键盘事件)
 - [x] [鼠标事件](https://github.com/wailovet/vgame/wiki/wiki/鼠标事件)
+- [x] [定时器](https://github.com/wailovet/vgame/wiki/定时器)
+- [x] [数据存取](https://github.com/wailovet/vgame/wiki/数据存取)
 
