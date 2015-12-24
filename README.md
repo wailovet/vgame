@@ -24,10 +24,10 @@
 
 ## 目录
 
-- [x] [使用/初始化](https://github.com/overtrue/wechat/wiki/初始化)
-- [x] [Sprite](https://github.com/overtrue/wechat/wiki/Sprite)
-- [x] [LabelTTF](https://github.com/overtrue/wechat/wiki/LabelTTF)
-- [x] [触摸事件](https://github.com/overtrue/wechat/wiki/触摸事件)
-- [x] [键盘事件](https://github.com/overtrue/wechat/wiki/键盘事件)
-- [x] [鼠标事件](https://github.com/overtrue/wechat/wiki/鼠标事件)
+- [x] [使用/初始化](/wiki/初始化)
+- [x] [Sprite](/wiki/Sprite)
+- [x] [LabelTTF](/wiki/LabelTTF)
+- [x] [触摸事件](/wiki/触摸事件)
+- [x] [键盘事件](/wiki/键盘事件)
+- [x] [鼠标事件](/wiki/鼠标事件)
 
