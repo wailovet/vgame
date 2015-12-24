@@ -25,6 +25,7 @@
 ## 目录
 
 - [x] [使用/初始化](https://github.com/wailovet/vgame/wiki/初始化)
+- [x] [背景](https://github.com/wailovet/vgame/wiki/背景)
 - [x] [全局属性](https://github.com/wailovet/vgame/wiki/全局属性)
 - [x] [Sprite](https://github.com/wailovet/vgame/wiki/Sprite)
 - [x] [LabelTTF](https://github.com/wailovet/vgame/wiki/wiki/LabelTTF)
