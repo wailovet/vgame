@@ -116,7 +116,7 @@ Vg.prototype.clean = function () {
 Vg.prototype.allUpdate = {};
 Vg.prototype.addUpdate = function (name, interval, call_back) {
     if (this.allUpdate[name]) {
-        throw "err name";
+        this.stopUpdate(name);
     }
     this.allUpdate[name] = window.setInterval(function () {
         call_back();
@@ -224,6 +224,20 @@ Vg.prototype.onKeyDown = function (call_back) {
 Vg.prototype.onKeyUp = function (call_back) {
     window.onkeyup = call_back;
 };
+Vg.prototype.onKeyUp = function (call_back) {
+    window.onkeyup = call_back;
+};
+
+
+Vg.prototype.setData = function (key, val) {
+    localStorage.setItem(key, val);
+}
+Vg.prototype.getData = function (key) {
+    return localStorage.getItem(key);
+}
+Vg.prototype.log = function (str) {
+    console.log("vgame[" + (new Date()).toLocaleString() + "][" + str + "]");
+}
 
 Vg.global = {}
 
