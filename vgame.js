@@ -137,6 +137,15 @@ Vg.prototype.addSprite = function (file) {
     sprite.setUpdate(function () {
         _this.update();
     });
+    sprite.setRemove(function (id) {
+        for (var i = 0; i < _this.node_list.length; i++) {
+            if (id == _this.node_list[i].id) {
+                _this.node_list.splice(i, 1);
+                _this.update();
+                return;
+            }
+        }
+    })
     this.node_list.push(sprite);
     return sprite;
 };
@@ -298,7 +307,7 @@ BaseNode.prototype.click = function (call_back) {
 };
 
 BaseNode.prototype.remove = function () {
-
+    this.fun_remove(this.id);
 };
 
 BaseNode.prototype.setOpacity = function (f) {

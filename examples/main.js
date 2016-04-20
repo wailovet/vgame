@@ -73,7 +73,6 @@ function gameInit(){
 		if(!isRun){return;}
 		if(c){return;}
 
-		console.log("s"+x+"|"+(y-_y)*2+0)
 		sp2.setPosition(vg.getWidth() / 2,(y-_y)*2+0);
 	});
 
