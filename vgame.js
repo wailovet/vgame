@@ -1,414 +1,384 @@
-(function () {
-    window.Vg = function (initFun) {
+Vg = function (dom_id, width, height, is_zoom) {
+    if (dom_id) this.initDom(dom_id);
+    if (width && height) this.initSize(width, height);
+    if (is_zoom) this.initZoom(is_zoom);
 
-        var _ready = initFun;
-        this.ready = function (initFun) {
-            _ready = initFun;
-        }
-        var _old_window_onload = window.onload;
-        window.onload = function () {
-            if (_old_window_onload) {
-                _old_window_onload();
-            }
-            if (_ready) {
-                _ready(this);
-            }
-        }
+    if (this.run_dom_id && this.run_width && this.run_height) {
+        this.run();
+    }
+};
+
+Vg.prototype.run_zoom = false;
+Vg.prototype.run_dom_id = Vg.prototype.run_width = Vg.prototype.run_height = null;
+Vg.prototype.canvas_element = null;
 
 
-        var bg_content = null;
-        var _vg_update = 0;
-        var vg_all_sprite_count = 0;
-        var vg_all_sprite = Array();
-        var now_max_id = 0;
+Vg.prototype.initDom = function (dom_id) {
+    this.run_dom_id = dom_id;
+    return this;
+};
+Vg.prototype.initSize = function (width, height) {
+    this.run_width = width;
+    this.run_height = height;
+    return this;
+};
+Vg.prototype.initZoom = function (is_zoom) {
+    this.run_zoom = is_zoom;
+    return this;
+};
+
+Vg.prototype.checkIsInit = function () {
+    if (!this.run_dom_id || !this.run_width || !this.run_height) {
+        throw "Init error : v.initDom('id').initSize(800,600).run();";
+    }
+};
+
+Vg.prototype.run = function () {
+    this.checkIsInit();
+    this.canvas_element = document.getElementById(this.run_dom_id);
+    if (!this.canvas_element) {
+        throw "'#" + this.run_dom_id + "' Not Found";
+    }
+    Vg.global['width'] = this.canvas_element.width = this.run_width;
+    Vg.global['height'] = this.canvas_element.height = this.run_height;
+
+    if (this.run_zoom) {
+        this.canvas_element.style.width = '100%';
+        this.canvas_element.style.height = '100%';
+    }
+    this.setOnTouchListents();
+    return this;
+};
 
 
-        function _LabelTTF(text, size, family, color) {
-            var _this = this;
-            var _canvas = this.canvas = document.createElement('canvas');
-            var _context = this.context = this.canvas.getContext('2d');
-            this.type = "LabelTTF";
-            this.x = 0;
-            this.y = 0;
-            this.height = size;
-
-            this.size = size;
-
-            color = (color != '') ? color : "#ffffff";
+Vg.prototype.getWidth = function () {
+    return this.canvas_element.width;
+}
+Vg.prototype.getHeight = function () {
+    return this.canvas_element.height;
+}
 
 
-            _canvas.height = bg_content.height;
-            _canvas.width = bg_content.width;
-            _context.fillStyle = color;
-            _context.font = size + "px " + family;
-
-
-            this.setText = function (text) {
-                _context.clearRect(0, 0, _canvas.width, _canvas.height);
-                var metrics = _context.measureText(text);
-                _this.width = metrics.width;
-                _context.fillText(text, 0, _this.size / 1.2);
-
-                vg_update();
-            }
-            _bases(this);
-            this.setText(text);
-
-        }
-
-        function _Sprite(file) {
-            var _this = this;
-            var _canvas = this.canvas = document.createElement('canvas');
-            var _context = this.context = this.canvas.getContext('2d');
-            var _img = this.img = new Image();
-            this.img.src = file;
-            this.type = "sprite";
-            this.x = 0;
-            this.y = 0;
-            this.width = 0;
-            this.height = 0;
-            this.originalWidth = 0;
-            this.originalHeight = 0;
-            _img.onload = function () {
-                _this.originalWidth = _this.width = _canvas.width = _img.width;
-                _this.originalHeight = _this.height = _canvas.height = _img.height;
-                _context.drawImage(_img, 0, 0);
-                vg_update();
-            }
-
-            this.setBackground = function (file) {
-                this.img.src = file;
-            }
-            _bases(this);
-        };
-        function _bases(_this) {
-
-            now_max_id++;
-            _this.id = now_max_id;
-            _this.getX = function () {
-                return _this.x;
-            }
-            _this.getY = function () {
-                return _this.y;
-            }
-            _this.setPosition = function (_x, _y) {
-                _this.x = _x;
-                _this.y = _y;
-                vg_update();
-            }
-
-            _this.setScale = function (f) {
-                _this.width = _this.originalWidth * f;
-                _this.height = _this.originalHeight * f;
-                vg_update();
-            }
-
-            //动画精度
-            var jd = 10;
-            var move_c = false;
-            _this.move = function (_x, _y, sec, funcall) {
-                if (move_c == true)return;
-                move_c = true;
-                var fdx = (_x - _this.x) / (sec * (1000));
-                var fdy = (_y - _this.y) / (sec * (1000));
-                var i = 0;
-                var k = window.setInterval(function () {
-                    _this.setPosition(_this.x + fdx * jd, _this.y + fdy * jd);
-                    vg_update();
-                    i += jd;
-                    if (i > sec * 1000) {
-                        clearInterval(k);
-                        _this.setPosition(_x, _y);
-                        move_c = false;
-                        funcall();
-                    }
-                }, jd);
-                return this;
-            }
-
-            var scale_c = false;
-            _this.scale = function (f, sec, funcall) {
-                if (scale_c == true)return;
-                scale_c = true;
-                var fdw = (_this.originalWidth * (f - 1)) / (sec * (1000));
-                var fdh = (_this.originalHeight * (f - 1)) / (sec * (1000));
-                _this.width = _this.originalWidth;
-                _this.height = _this.originalWidth;
-
-                var i = 0;
-                var k = window.setInterval(function () {
-                    _this.width = _this.width + fdw * jd;
-                    _this.height = _this.height + fdh * jd;
-                    vg_update();
-                    i += jd;
-                    if (i > sec * 1000) {
-                        clearInterval(k);
-                        _this.width = _this.originalWidth * f;
-                        _this.height = _this.originalHeight * f;
-                        scale_c = false;
-                        if (funcall != null) {
-                            funcall();
-
-                        }
-                    }
-                }, jd);
-                return this;
-            }
-
-            _this.click = function (funcall) {
-                _this._click = funcall;
-            }
-
-            _this.remove = function () {
-                for (var i = 0; i < vg_all_sprite.length; i++) {
-                    if (_this.id == vg_all_sprite[i].id) {
-                        vg_all_sprite.splice(i, 1);
-                        vg_update();
-                        return;
-                    }
-                }
-            }
-
-            _this.setOpacity = function (f) {
-                _this.context.globalAlpha = f;
-                _this.context.clearRect(0, 0, _this.width, _this.height);
-                _this.context.drawImage(_this.img, 0, 0);
-                vg_update();
-            }
-
-
-            //	_this.add = function(file){
-            //
-            //	}
-
-        }
-
-        function __TouchStart(event) {
-            var touch = event.touches[0];
-            __doTouchBegan(touch.pageX, bg_content.height - touch.pageY);
-            //event.preventDefault();
-        }
-
-        function __TouchMove(event) {
-            var touch = event.touches[0];
-            __doTouchMove(touch.pageX, bg_content.height - touch.pageY);
-            event.preventDefault();
-        }
-
-        function __TouchEnd(event) {
-            var touch = event.changedTouches[0];
-            __doTouchEnd(touch.pageX, bg_content.height - touch.pageY);
-            //event.preventDefault();
-        }
-
-        function vg_update() {
-            var context = bg_content.getContext('2d');
-            var tmp_x, tmp_y;
-            context.clearRect(0, 0, bg_content.width, bg_content.height);
-            for (var i = 0; i < vg_all_sprite.length; i++) {
-                //alert(vg_all_sprite[i]);
-                var sp = vg_all_sprite[i];
-                if (sp.type == "bg") {
-                    context.drawImage(sp.canvas, sp.x, sp.y, sp.width, sp.height);
-                } else {
-                    tmp_x = sp.x - (sp.width / 2);
-                    tmp_y = (bg_content.height - sp.y) - (sp.height / 2);
-                    if (sp.type == "sprite") {
-                        context.drawImage(sp.canvas, tmp_x, tmp_y, sp.width, sp.height);
-                    } else {
-                        context.drawImage(sp.canvas, tmp_x, tmp_y);
-                    }
+Vg.prototype.node_list = [];
+Vg.prototype.setOnTouchListents = function () {
+    var tmp_x, tmp_y;
+    var _this = this;
+    this.canvas_element.addEventListener('click', function (e) {
+        for (var i = _this.node_list.length - 1; i >= 0; i--) {
+            var sp = _this.node_list[i];
+            tmp_x = sp.x - (sp.width / 2);
+            tmp_y = (_this.node_list.height - sp.y) - (sp.height / 2);
+            if (tmp_x < e.offsetX && tmp_y < e.offsetY
+                && tmp_x + sp.width > e.offsetX && tmp_y + sp.height > e.offsetY) {
+                if (sp.fun_click != null) {
+                    sp.fun_click();
+                    return;
                 }
             }
         }
+    }, true);
+};
 
-        function vg_setOnTouchListents() {
-            var context = bg_content.getContext('2d');
-            var tmp_x, tmp_y;
-            bg_content.addEventListener('click', function (e) {
-                for (var i = vg_all_sprite.length - 1; i >= 0; i--) {
-                    var sp = vg_all_sprite[i];
-                    tmp_x = sp.x - (sp.width / 2);
-                    tmp_y = (bg_content.height - sp.y) - (sp.height / 2);
-                    if (tmp_x < e.offsetX && tmp_y < e.offsetY
-                        && tmp_x + sp.width > e.offsetX && tmp_y + sp.height > e.offsetY) {
-                        if (sp._click != null) {
-                            sp._click();
-                            return;
-                        }
-                    }
-                }
-            }, true);
-        }
-
-        function checkIsInit() {
-            if (!run_dom_id || !run_width || !run_height) {
-                throw "Init error : v.initDom('id').initSize(800,600).run();";
+Vg.prototype.background = function (file) {
+    var _bg = this.addSprite(file);
+    _bg.type = "bg";
+};
+Vg.prototype.update = function () {
+    var context = this.canvas_element.getContext('2d');
+    var tmp_x, tmp_y;
+    context.clearRect(0, 0, this.canvas_element.width, this.canvas_element.height);
+    for (var i = 0; i < this.node_list.length; i++) {
+        var sp = this.node_list[i];
+        if (sp.type == "bg") {
+            context.drawImage(sp.canvas, sp.x, sp.y, sp.width, sp.height);
+        } else {
+            tmp_x = sp.x - (sp.width / 2);
+            tmp_y = (this.canvas_element.height - sp.y) - (sp.height / 2);
+            if (sp.type == "Sprite") {
+                context.drawImage(sp.canvas, tmp_x, tmp_y, sp.width, sp.height);
+            } else {
+                context.drawImage(sp.canvas, tmp_x, tmp_y);
             }
         }
-
-        window.addEventListener('touchstart', __TouchStart, true);
-        window.addEventListener('touchmove', __TouchMove, true);
-        window.addEventListener('touchend', __TouchEnd, true);
+    }
+};
 
 
-        var doKeyDown = null;
-        var doKeyUp = null;
-        window.onkeydown = function () {
-            if (doKeyDown != null) {
-                doKeyDown(event.which);
-            }
-        }
-        window.onkeyup = function () {
-            if (doKeyUp != null) {
-                doKeyUp(event.which);
-            }
-        }
+Vg.prototype.clean = function () {
+    this.checkIsInit();
+    var context = this.canvas_element.getContext('2d');
+    context.clearRect(0, 0, this.canvas_element.width, this.canvas_element.height);
+    this.node_list.splice(0, this.node_list.length);
+    this.update();
+}
 
 
-        this.getWidth = function () {
-            return bg_content.width;
-        }
-        this.getHeight = function () {
-            return bg_content.height;
-        }
+Vg.prototype.allUpdate = {};
+Vg.prototype.addUpdate = function (name, interval, call_back) {
+    if (this.allUpdate[name]) {
+        throw "err name";
+    }
+    this.allUpdate[name] = window.setInterval(function () {
+        call_back();
+    }, interval * 1000);
+    return this.allUpdate[name];
+};
+Vg.prototype.stopUpdate = function (name) {
+    clearInterval(this.allUpdate[name]);
+}
 
 
-        this.initDom = function (dom_id) {
-            run_dom_id = dom_id;
-            return this;
-        }
-        this.initSize = function (p_width, p_height) {
-            run_width = p_width;
-            run_height = p_height;
-            return this;
-        }
-        this.initZoom = function (is_zoom) {
-            run_zoom = is_zoom;
-            return this;
-        }
-        var run_dom_id = null, run_width = null, run_height = null, run_zoom = false;
-        this.run = function () {
-            checkIsInit();
-
-            bg_content = document.getElementById(run_dom_id);
-            if (!bg_content) {
-                throw "'#" + run_dom_id + "' Not Found";
-            }
-            bg_content.width = run_width;
-            bg_content.height = run_height;
-            if (run_zoom) {
-                bg_content.style.width = '100%';
-                bg_content.style.height = '100%';
-            }
-            vg_setOnTouchListents();
-            return this;
-        }
-        this.background = function (bgfile) {
-            var _bg = this.addSprite(bgfile);
-            _bg.type = "bg";
-        }
-
-        this.addSprite = function (file) {
-            checkIsInit();
-
-            var sprite = new _Sprite(file);
-            vg_all_sprite.push(sprite);
-            return sprite;
-        }
-        this.addLabelTTF = function (text, size, family, color) {
-            checkIsInit();
-            family = (family != '') ? family : "微软雅黑";
-            size = (size != '') ? size : 24;
-            color = (color != null) ? color : "#ffffff";
-            var labelTTF = new _LabelTTF(text, size, family, color);
-            vg_all_sprite.push(labelTTF);
-            return labelTTF;
-        }
-
-        this.log = function (s) {
-            console.log("vgame[" + (new Date()).toLocaleString() + "][" + s + "]");
-        }
-        this.setData = function (key, val) {
-            localStorage.setItem(key, val);
-        }
-        this.getData = function (key) {
-            return localStorage.getItem(key);
-        }
+Vg.prototype.max_id = 0;
+Vg.prototype.addSprite = function (file) {
+    this.checkIsInit();
+    this.max_id++;
+    var sprite = new Sprite(this.max_id, file);
+    var _this = this;
+    sprite.setUpdate(function () {
+        _this.update();
+    });
+    this.node_list.push(sprite);
+    return sprite;
+};
 
 
-        //触摸事件
-        var __doTouchBegan = function () {
-        }
-        this.onTouchBegan = function (funcall) {
-            __doTouchBegan = funcall;
-        }
-
-        //触摸划动
-        var __doTouchMove = function () {
-        }
-        this.onTouchMoved = function (funcall) {
-            __doTouchMove = funcall;
-        }
-
-
-        //触摸结束
-        var __doTouchEnd = function () {
-        }
-        this.onTouchEnded = function (funcall) {
-            __doTouchEnd = funcall;
-        }
-
-        //鼠标事件
-        this.onMouseDown = function (funcall) {
-            bg_content.onmousedown = function (event) {
-                funcall(event.offsetX, bg_content.height - event.offsetY);
-            }
-        }
-        this.onMouseMove = function (funcall) {
-            bg_content.onmousemove = function (event) {
-                funcall(event.offsetX, bg_content.height - event.offsetY);
-            }
-        }
-        this.onMouseUp = function (funcall) {
-            bg_content.onmouseup = function (event) {
-                funcall(event.offsetX, bg_content.height - event.offsetY);
-            }
-        }
-
-        //键盘事件
-        this.onKeyDown = function (funcall) {
-            doKeyDown = funcall;
-        }
-
-        this.onKeyUp = function (funcall) {
-            doKeyUp = funcall;
-        }
+Vg.prototype.addLabelTTF = function (text, size, family, color) {
+    this.checkIsInit();
+    this.max_id++;
+    family = (family != '') ? family : "微软雅黑";
+    size = (size != '') ? size : 24;
+    color = (color != null) ? color : "#ffffff";
+    var labelTTF = new LabelTTF(this.max_id + 1, text, size, family, color);
+    var _this = this;
+    labelTTF.setUpdate(function () {
+        _this.update();
+    });
+    this.node_list.push(labelTTF);
+    return labelTTF;
+};
 
 
-        this.update = function (interval, funcall) {
-            if (_vg_update != 0) {
-                this.stopUpdate();
-            }
-            _vg_update = window.setInterval(function () {
-                funcall();
-            }, interval * 1000);
+//触摸事件
+Vg.prototype.onTouchBegan = function (call_back) {
+    var _this = this;
+    window.addEventListener('touchstart', function (event) {
+        var touch = event.touches[0];
+        call_back(touch.pageX, _this.canvas_element.height - touch.pageY);
+    }, true);
+};
+
+//触摸划动
+Vg.prototype.onTouchMoved = function (call_back) {
+    var _this = this;
+    window.addEventListener('touchmove', function (event) {
+        var touch = event.touches[0];
+        call_back(touch.pageX, _this.canvas_element.height - touch.pageY);
+        event.preventDefault();
+    }, true);
+};
+
+
+//触摸结束
+Vg.prototype.onTouchEnded = function (call_back) {
+    var _this = this;
+    window.addEventListener('touchend', function (event) {
+        var touch = event.changedTouches[0];
+        call_back(touch.pageX, _this.canvas_element.height - touch.pageY);
+    }, true);
+};
+
+//鼠标事件
+Vg.prototype.onMouseDown = function (call_back) {
+    var _this = this;
+    this.canvas_element.onmousedown = function (event) {
+        call_back(event.offsetX, _this.canvas_element.height - event.offsetY);
+    }
+};
+Vg.prototype.onMouseMove = function (call_back) {
+    var _this = this;
+    this.canvas_element.onmousemove = function (event) {
+        call_back(event.offsetX, _this.canvas_element.height - event.offsetY);
+    }
+};
+Vg.prototype.onMouseUp = function (call_back) {
+    var _this = this;
+    this.canvas_element.onmouseup = function (event) {
+        call_back(event.offsetX, _this.canvas_element.height - event.offsetY);
+    }
+};
+
+//键盘事件
+Vg.prototype.onKeyDown = function (call_back) {
+    window.onkeydown = call_back;
+};
+
+Vg.prototype.onKeyUp = function (call_back) {
+    window.onkeyup = call_back;
+};
+
+Vg.global = {}
+
+var BaseNode = function () {
+};
+BaseNode.prototype.id = 0;
+BaseNode.prototype.x = BaseNode.prototype.y = 0;
+BaseNode.prototype.width = BaseNode.prototype.height = BaseNode.prototype.originalWidth = BaseNode.prototype.originalHeight = 0;
+BaseNode.prototype.getX = function () {
+    return this.x;
+};
+BaseNode.prototype.getY = function () {
+    return this.y;
+};
+
+BaseNode.prototype.setPosition = function (x, y) {
+    this.x = x;
+    this.y = y;
+    this.update();
+    return this;
+};
+BaseNode.prototype.setScale = function (f) {
+    this.width = this.originalWidth * f;
+    this.height = this.originalHeight * f;
+    this.update();
+    return this;
+};
+
+
+BaseNode.prototype.move_lock = false;
+BaseNode.prototype.animation_accuracy = 10;
+BaseNode.prototype.move = function (x, y, sec, call_back) {
+    if (this.move_lock == true)return;
+    this.move_lock = true;
+    var fdx = (x - this.x) / (sec * (1000));
+    var fdy = (y - this.y) / (sec * (1000));
+    var _this = this;
+    var i = 0;
+    var k = window.setInterval(function () {
+        _this.setPosition(_this.x + fdx * _this.animation_accuracy, _this.y + fdy * _this.animation_accuracy);
+        i += _this.animation_accuracy;
+        if (i > sec * 1000) {
+            clearInterval(k);
+            _this.setPosition(x, y);
+            _this.move_lock = false;
+            if (call_back)call_back();
         }
-        this.stopUpdate = function () {
-            clearInterval(_vg_update);
+    }, _this.animation_accuracy);
+    return this;
+};
+
+BaseNode.prototype.scale_lock = false;
+BaseNode.prototype.scale = function (f, sec, call_back) {
+    if (this.scale_lock == true)return;
+    this.scale_lock = true;
+    var fdw = (this.originalWidth * (f - 1)) / (sec * (1000));
+    var fdh = (this.originalHeight * (f - 1)) / (sec * (1000));
+    this.width = this.originalWidth;
+    this.height = this.originalHeight;
+
+    var _this = this;
+    var i = 0;
+    var k = window.setInterval(function () {
+        _this.width = _this.width + fdw * _this.animation_accuracy;
+        _this.height = _this.height + fdh * _this.animation_accuracy;
+        _this.update();
+        i += _this.animation_accuracy;
+        if (i > sec * 1000) {
+            clearInterval(k);
+            _this.setScale(f);
+            _this.scale_lock = false;
+            if (call_back) call_back();
         }
+    }, _this.animation_accuracy);
+    return this;
+};
+
+BaseNode.prototype.fun_click = null;
+BaseNode.prototype.click = function (call_back) {
+    this.fun_click = call_back;
+};
+
+BaseNode.prototype.remove = function () {
+
+};
+
+BaseNode.prototype.setOpacity = function (f) {
+    this.context.globalAlpha = f;
+    this.update();
+};
+
+BaseNode.prototype.fun_update = null;
+BaseNode.prototype.setUpdate = function (callback) {
+    this.fun_update = callback;
+};
+BaseNode.prototype.update = function () {
+    if (this.fun_update) {
+        this.fun_update();
+    }
+};
+
+BaseNode.prototype.fun_remove = null;
+BaseNode.prototype.setRemove = function (callback) {
+    this.fun_remove = callback;
+};
 
 
-        this.clean = function () {
-            checkIsInit();
-            var context = bg_content.getContext('2d');
-            context.clearRect(0, 0, bg_content.width, bg_content.height);
-            vg_all_sprite.splice(0, vg_all_sprite.length);
-            vg_update();
-        }
+var Sprite = function (id, file) {
+
+    this.id = id;
+    this.canvas = document.createElement('canvas');
+    this.context = this.canvas.getContext('2d');
+    this.img = new Image();
+    this.img.src = file;
+    var _this = this;
+    this.img.onload = function () {
+        _this.originalWidth = _this.width = _this.canvas.width = _this.img.width;
+        _this.originalHeight = _this.height = _this.canvas.height = _this.img.height;
+        _this.context.drawImage(_this.img, 0, 0);
+        _this.update();
+    }
+};
+Sprite.prototype = new BaseNode();
+Sprite.prototype.constructor = Sprite;
+Sprite.prototype.type = "Sprite";
+Sprite.prototype.canvas = null;
+Sprite.prototype.img = null;
+
+Sprite.prototype.setBackground = function (file) {
+    this.img.src = file;
+};
 
 
-        return this;
+var LabelTTF = function (id, text, size, family, color) {
+    this.id = id;
 
-    };
-})();
+    this.canvas = document.createElement('canvas');
+    this.context = this.canvas.getContext('2d');
+    this.canvas.width = Vg.global['width'];
+    this.canvas.height = Vg.global['height'];
+    this.height = size;
+
+    this.context.fillStyle = color;
+    this.context.font = size + "px " + family;
+    this.size = size;
+    this.setText(text);
+};
+
+LabelTTF.prototype = new BaseNode();
+LabelTTF.prototype.constructor = LabelTTF;
+LabelTTF.prototype.type = "LabelTTF";
+LabelTTF.prototype.canvas = null;
+LabelTTF.prototype.text = "";
+LabelTTF.prototype.size = 0;
+LabelTTF.prototype.setText = function (text) {
+    this.text = text;
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    var metrics = this.context.measureText(text);
+    this.width = metrics.width;
+    this.context.fillText(this.text, 0, this.size / 1.2);
+    this.update();
+};
+
+window.Vg = Vg;
+
+
+

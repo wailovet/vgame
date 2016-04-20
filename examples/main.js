@@ -10,9 +10,10 @@ function timer(){
 		isRun = false;
 	}
 }
-function gameInit(vg){
+function gameInit(){
 	//vg.debug(true);
-    vg.initDom('gameCanvas').initSize(800,1300).initZoom(true).run();
+	var vg = new Vg();
+	vg.initDom('gameCanvas').initSize(800,1300).initZoom(true).run();
 	vg.background('res/bg.png');
 	var sp = vg.addSprite('res/mb0.png');
 	sp.setPosition(vg.getWidth() / 2,0)
@@ -46,7 +47,7 @@ function gameInit(vg){
 	__time.setPosition(vg.getWidth() / 2,850);
 
 	changeTime = function(sec){
-		__time.setText(10-sec	);
+		__time.setText(10-sec);
 	}
 
 	vg.onTouchEnded(function(){
@@ -72,11 +73,10 @@ function gameInit(vg){
 		if(!isRun){return;}
 		if(c){return;}
 
+		console.log("s"+x+"|"+(y-_y)*2+0)
 		sp2.setPosition(vg.getWidth() / 2,(y-_y)*2+0);
 	});
 
 }
 
-Vg(function(v){
-	gameInit(v);
-});
+gameInit();
