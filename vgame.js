@@ -8,7 +8,7 @@ Vg = function (dom_id, width, height, is_zoom) {
     }
 };
 
-Vg.global = {"change_node":{},"is_update":false,"animation_accuracy":10}
+Vg.global = {"change_node":{},"is_update":false,"animation_accuracy":20}
 Vg.prototype.run_zoom = false;
 Vg.prototype.run_dom_id = Vg.prototype.run_width = Vg.prototype.run_height = null;
 Vg.prototype.canvas_element = null;
