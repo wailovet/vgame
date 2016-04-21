@@ -157,11 +157,20 @@ Vg.prototype.addLabelTTF = function (text, size, family, color) {
     family = (family != '') ? family : "微软雅黑";
     size = (size != '') ? size : 24;
     color = (color != null) ? color : "#ffffff";
-    var labelTTF = new LabelTTF(this.max_id + 1, text, size, family, color);
+    var labelTTF = new LabelTTF(this.max_id, text, size, family, color);
     var _this = this;
     labelTTF.setUpdate(function () {
         _this.update();
     });
+    labelTTF.setRemove(function (id) {
+        for (var i = 0; i < _this.node_list.length; i++) {
+            if (id == _this.node_list[i].id) {
+                _this.node_list.splice(i, 1);
+                _this.update();
+                return;
+            }
+        }
+    })
     this.node_list.push(labelTTF);
     return labelTTF;
 };
@@ -218,14 +227,15 @@ Vg.prototype.onMouseUp = function (call_back) {
 
 //键盘事件
 Vg.prototype.onKeyDown = function (call_back) {
-    window.onkeydown = call_back;
+    window.onkeydown = function () {
+        call_back(event.which)
+    };
 };
 
 Vg.prototype.onKeyUp = function (call_back) {
-    window.onkeyup = call_back;
-};
-Vg.prototype.onKeyUp = function (call_back) {
-    window.onkeyup = call_back;
+    window.onkeyup = function () {
+        call_back(event.which)
+    };
 };
 
 
