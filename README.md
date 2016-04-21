@@ -6,15 +6,18 @@
 
 ```html
     <script src="vgame.js" type="text/javascript" charset="utf-8"></script>
-    <script type="text/javascript" charset="utf-8">
-        var vg = new Vg(function(v){
-            v.initDom('gameCanvas').initSize(800,1300).initZoom(true).run();
-	        v.background('res/bg.png');
-	        ......
-        });
-    </script>
-
     <canvas id="gameCanvas" ></canvas>
+    
+    
+    <script type="text/javascript" charset="utf-8">
+        var vg = new Vg();
+        vg.initDom('gameCanvas').initSize(800,1300).initZoom(true).run();
+	    //或者
+        var vg = new Vg('gameCanvas',800,1300,true);
+        
+        //设置背景
+	    vg.background('res/bg.png');
+    </script>
 ```
 
 
