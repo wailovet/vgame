@@ -8,6 +8,7 @@ Vg = function (dom_id, width, height, is_zoom) {
     }
 };
 
+Vg.global = {"change_node":{},"is_update":false,"animation_accuracy":10}
 Vg.prototype.run_zoom = false;
 Vg.prototype.run_dom_id = Vg.prototype.run_width = Vg.prototype.run_height = null;
 Vg.prototype.canvas_element = null;
@@ -47,6 +48,14 @@ Vg.prototype.run = function () {
         this.canvas_element.style.height = '100%';
     }
     this.setOnTouchListents();
+
+    var _this = this;
+    setInterval(function(){
+        if(Vg.global['is_update']){
+            _this.update();
+            Vg.global['is_update'] = false;
+        }
+    },Vg.global['animation_accuracy'])
     return this;
 };
 
@@ -83,10 +92,11 @@ Vg.prototype.background = function (file) {
     var _bg = this.addSprite(file);
     _bg.type = "bg";
 };
+
+
 Vg.prototype.update = function () {
     var context = this.canvas_element.getContext('2d');
     var tmp_x, tmp_y;
-    context.clearRect(0, 0, this.canvas_element.width, this.canvas_element.height);
     for (var i = 0; i < this.node_list.length; i++) {
         var sp = this.node_list[i];
         if (sp.type == "bg") {
@@ -95,12 +105,16 @@ Vg.prototype.update = function () {
             tmp_x = sp.x - (sp.width / 2);
             tmp_y = (this.canvas_element.height - sp.y) - (sp.height / 2);
             if (sp.type == "Sprite") {
-                context.drawImage(sp.canvas, tmp_x, tmp_y, sp.width, sp.height);
+                //if(Vg.global['change_node'][sp.id]){
+                    context.drawImage(sp.canvas, tmp_x, tmp_y, sp.width, sp.height);
+                //}
             } else {
                 context.drawImage(sp.canvas, tmp_x, tmp_y);
             }
         }
     }
+    Vg.global['change_node'] = {};
+
 };
 
 
@@ -134,14 +148,10 @@ Vg.prototype.addSprite = function (file) {
     this.max_id++;
     var sprite = new Sprite(this.max_id, file);
     var _this = this;
-    sprite.setUpdate(function () {
-        _this.update();
-    });
     sprite.setRemove(function (id) {
         for (var i = 0; i < _this.node_list.length; i++) {
             if (id == _this.node_list[i].id) {
                 _this.node_list.splice(i, 1);
-                _this.update();
                 return;
             }
         }
@@ -159,14 +169,10 @@ Vg.prototype.addLabelTTF = function (text, size, family, color) {
     color = (color != null) ? color : "#ffffff";
     var labelTTF = new LabelTTF(this.max_id, text, size, family, color);
     var _this = this;
-    labelTTF.setUpdate(function () {
-        _this.update();
-    });
     labelTTF.setRemove(function (id) {
         for (var i = 0; i < _this.node_list.length; i++) {
             if (id == _this.node_list[i].id) {
                 _this.node_list.splice(i, 1);
-                _this.update();
                 return;
             }
         }
@@ -249,7 +255,6 @@ Vg.prototype.log = function (str) {
     console.log("vgame[" + (new Date()).toLocaleString() + "][" + str + "]");
 }
 
-Vg.global = {}
 
 var BaseNode = function () {
 };
@@ -266,13 +271,14 @@ BaseNode.prototype.getY = function () {
 BaseNode.prototype.setPosition = function (x, y) {
     this.x = x;
     this.y = y;
-    this.update();
+    Vg.global['change_node'][this.id] = true;
+    Vg.global['is_update'] = true;
     return this;
 };
 BaseNode.prototype.setScale = function (f) {
     this.width = this.originalWidth * f;
     this.height = this.originalHeight * f;
-    this.update();
+    Vg.global['is_update'] = true;
     return this;
 };
 
@@ -313,8 +319,8 @@ BaseNode.prototype.scale = function (f, sec, call_back) {
     var k = window.setInterval(function () {
         _this.width = _this.width + fdw * _this.animation_accuracy;
         _this.height = _this.height + fdh * _this.animation_accuracy;
-        _this.update();
         i += _this.animation_accuracy;
+        Vg.global['is_update'] = true;
         if (i > sec * 1000) {
             clearInterval(k);
             _this.setScale(f);
@@ -332,22 +338,14 @@ BaseNode.prototype.click = function (call_back) {
 
 BaseNode.prototype.remove = function () {
     this.fun_remove(this.id);
+    Vg.global['is_update'] = true;
 };
 
 BaseNode.prototype.setOpacity = function (f) {
     this.context.globalAlpha = f;
-    this.update();
+    Vg.global['is_update'] = true;
 };
 
-BaseNode.prototype.fun_update = null;
-BaseNode.prototype.setUpdate = function (callback) {
-    this.fun_update = callback;
-};
-BaseNode.prototype.update = function () {
-    if (this.fun_update) {
-        this.fun_update();
-    }
-};
 
 BaseNode.prototype.fun_remove = null;
 BaseNode.prototype.setRemove = function (callback) {
@@ -367,7 +365,6 @@ var Sprite = function (id, file) {
         _this.originalWidth = _this.width = _this.canvas.width = _this.img.width;
         _this.originalHeight = _this.height = _this.canvas.height = _this.img.height;
         _this.context.drawImage(_this.img, 0, 0);
-        _this.update();
     }
 };
 Sprite.prototype = new BaseNode();
@@ -408,7 +405,7 @@ LabelTTF.prototype.setText = function (text) {
     var metrics = this.context.measureText(text);
     this.width = metrics.width;
     this.context.fillText(this.text, 0, this.size / 1.2);
-    this.update();
+    Vg.global['is_update'] = true;
 };
 
 window.Vg = Vg;
