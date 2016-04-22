@@ -8,7 +8,7 @@ Vg = function (dom_id, width, height, is_zoom) {
     }
 };
 
-Vg.global = {"change_node":{},"is_update":false,"animation_accuracy":10}
+Vg.global = {"width": 0, "height": 0, "change_node": {}, "is_update": false, "animation_accuracy": 10, "scene": {}}
 Vg.prototype.run_zoom = false;
 Vg.prototype.run_dom_id = Vg.prototype.run_width = Vg.prototype.run_height = null;
 Vg.prototype.canvas_element = null;
@@ -49,14 +49,21 @@ Vg.prototype.run = function () {
     }
     this.setOnTouchListents();
 
+
+    // 创建WebGL渲染器，镜头以及场景
+    var camera = new THREE.PerspectiveCamera(60, this.canvas_element.width / this.canvas_element.height);
+    Vg.global['scene'] = new THREE.Scene();
+    var tan_60 = 1.7320508075689
+    // 镜头起始位置0，0，0，因此将镜头回拉
+    camera.position.z = (this.canvas_element.width * tan_60) / 2;
+    Vg.global['camera'] = camera;
+    this.renderer = new THREE.WebGLRenderer({"canvas": this.canvas_element});
+    this.renderer.setSize(this.canvas_element.width, this.canvas_element.height);
+
     var _this = this;
-    setInterval(function(){
-        if(Vg.global['is_update']){
-            _this.update();
-            Vg.global['is_update'] = false;
-        }
-    },Vg.global['animation_accuracy'])
-    return this;
+    setInterval(function () {
+        _this.update();
+    }, Vg.global['animation_accuracy'])
 };
 
 
@@ -95,50 +102,18 @@ Vg.prototype.background = function (file) {
 
 
 Vg.prototype.update = function () {
-    var context = this.canvas_element.getContext('2d');
-    var tmp_x, tmp_y;
-    for (var i = 0; i < this.node_list.length; i++) {
-        var sp = this.node_list[i];
-        if (sp.type == "bg") {
-            context.drawImage(sp.canvas, sp.x, sp.y, sp.width, sp.height);
-        } else {
-            tmp_x = sp.x - (sp.width / 2);
-            tmp_y = (this.canvas_element.height - sp.y) - (sp.height / 2);
-            if (sp.type == "Sprite") {
-                //if(Vg.global['change_node'][sp.id]){
-                    context.drawImage(sp.canvas, tmp_x, tmp_y, sp.width, sp.height);
-                //}
-            } else {
-                context.drawImage(sp.canvas, tmp_x, tmp_y);
-            }
-        }
-    }
-    Vg.global['change_node'] = {};
-
+    this.renderer.render(Vg.global['scene'], Vg.global['camera']);
 };
 
 
 Vg.prototype.clean = function () {
-    this.checkIsInit();
-    var context = this.canvas_element.getContext('2d');
-    context.clearRect(0, 0, this.canvas_element.width, this.canvas_element.height);
-    this.node_list.splice(0, this.node_list.length);
-    this.update();
 }
 
 
 Vg.prototype.allUpdate = {};
 Vg.prototype.addUpdate = function (name, interval, call_back) {
-    if (this.allUpdate[name]) {
-        this.stopUpdate(name);
-    }
-    this.allUpdate[name] = window.setInterval(function () {
-        call_back();
-    }, interval * 1000);
-    return this.allUpdate[name];
 };
 Vg.prototype.stopUpdate = function (name) {
-    clearInterval(this.allUpdate[name]);
 }
 
 
@@ -147,11 +122,9 @@ Vg.prototype.addSprite = function (file) {
     this.checkIsInit();
     this.max_id++;
     var sprite = new Sprite(this.max_id, file);
-    var _this = this;
-    sprite.setRemove(function (id) {
 
-    })
-    this.node_list.push(sprite);
+
+    //this.node_list.push(sprite);
     return sprite;
 };
 
@@ -266,6 +239,7 @@ BaseNode.prototype.getY = function () {
 BaseNode.prototype.setPosition = function (x, y) {
     this.x = x;
     this.y = y;
+    if (this.node)this.node.position.set(x - (Vg.global['width'] / 2), y, 1);
     Vg.global['change_node'][this.id] = true;
     Vg.global['is_update'] = true;
     return this;
@@ -351,16 +325,18 @@ BaseNode.prototype.setRemove = function (callback) {
 var Sprite = function (id, file) {
 
     this.id = id;
-    this.canvas = document.createElement('canvas');
-    this.context = this.canvas.getContext('2d');
-    this.img = new Image();
-    this.img.src = file;
+    var textureLoader = new THREE.TextureLoader();
     var _this = this;
-    this.img.onload = function () {
-        _this.originalWidth = _this.width = _this.canvas.width = _this.img.width;
-        _this.originalHeight = _this.height = _this.canvas.height = _this.img.height;
-        _this.context.drawImage(_this.img, 0, 0);
-    }
+    textureLoader.load(file, function (t) {
+        var material = new THREE.SpriteMaterial({map: t});
+        _this.node = new THREE.Sprite(material);
+        var width = material.map.image.width;
+        var height = material.map.image.height;
+        _this.node.scale.set(width, height, 1);
+        _this.setPosition(_this.x, _this.y, 1);
+        Vg.global['scene'].add(_this.node);
+    });
+
 };
 Sprite.prototype = new BaseNode();
 Sprite.prototype.constructor = Sprite;
