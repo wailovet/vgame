@@ -43,27 +43,27 @@ Vg.prototype.run = function () {
     Vg.global['width'] = this.canvas_element.width = this.run_width;
     Vg.global['height'] = this.canvas_element.height = this.run_height;
 
-    if (this.run_zoom) {
-        this.canvas_element.style.width = '100%';
-        this.canvas_element.style.height = '100%';
-    }
     this.setOnTouchListents();
 
 
     // 创建WebGL渲染器，镜头以及场景
-    var camera = new THREE.PerspectiveCamera(60, this.canvas_element.width / this.canvas_element.height);
+    var m_z = 10000;
+    var camera = new THREE.PerspectiveCamera(Math.atan(this.canvas_element.height / 2 / m_z) / Math.PI * 360,
+        this.canvas_element.width / this.canvas_element.height, 1, 20000);
     Vg.global['scene'] = new THREE.Scene();
-    var tan_60 = 1.7320508075689
-    // 镜头起始位置0，0，0，因此将镜头回拉
-    camera.position.z = (this.canvas_element.width * tan_60) / 2;
+    camera.position.z = m_z;
     Vg.global['camera'] = camera;
     this.renderer = new THREE.WebGLRenderer({"canvas": this.canvas_element});
     this.renderer.setSize(this.canvas_element.width, this.canvas_element.height);
-
     var _this = this;
     setInterval(function () {
         _this.update();
     }, Vg.global['animation_accuracy'])
+
+    if (this.run_zoom) {
+        this.canvas_element.style.width = '100%';
+        this.canvas_element.style.height = '100%';
+    }
 };
 
 
@@ -98,6 +98,7 @@ Vg.prototype.setOnTouchListents = function () {
 Vg.prototype.background = function (file) {
     var _bg = this.addSprite(file);
     _bg.type = "bg";
+    _bg.setPosition(Vg.global['width'] / 2, Vg.global['height'] / 2, 0);
 };
 
 
@@ -112,8 +113,16 @@ Vg.prototype.clean = function () {
 
 Vg.prototype.allUpdate = {};
 Vg.prototype.addUpdate = function (name, interval, call_back) {
+    if (this.allUpdate[name]) {
+        this.stopUpdate(name);
+    }
+    this.allUpdate[name] = window.setInterval(function () {
+        call_back();
+    }, interval * 1000);
+    return this.allUpdate[name];
 };
 Vg.prototype.stopUpdate = function (name) {
+    clearInterval(this.allUpdate[name]);
 }
 
 
@@ -122,9 +131,9 @@ Vg.prototype.addSprite = function (file) {
     this.checkIsInit();
     this.max_id++;
     var sprite = new Sprite(this.max_id, file);
-
-
-    //this.node_list.push(sprite);
+    sprite.setRemove(function () {
+        Vg.global['scene'].remove(this.node)
+    });
     return sprite;
 };
 
@@ -132,20 +141,14 @@ Vg.prototype.addSprite = function (file) {
 Vg.prototype.addLabelTTF = function (text, size, family, color) {
     this.checkIsInit();
     this.max_id++;
-    family = (family != '') ? family : "微软雅黑";
+    family = (family != '' && typeof family != 'undefined') ? family : "微软雅黑";
     size = (size != '') ? size : 24;
     color = (color != null) ? color : "#ffffff";
     var labelTTF = new LabelTTF(this.max_id, text, size, family, color);
     var _this = this;
     labelTTF.setRemove(function (id) {
-        for (var i = 0; i < _this.node_list.length; i++) {
-            if (id == _this.node_list[i].id) {
-                _this.node_list.splice(i, 1);
-                return;
-            }
-        }
+
     })
-    this.node_list.push(labelTTF);
     return labelTTF;
 };
 
@@ -239,14 +242,17 @@ BaseNode.prototype.getY = function () {
 BaseNode.prototype.setPosition = function (x, y) {
     this.x = x;
     this.y = y;
-    if (this.node)this.node.position.set(x - (Vg.global['width'] / 2), y, 1);
+    if (this.node)this.node.position.set(x - (Vg.global['width'] / 2), y - (Vg.global['height'] / 2), this.node.position.z);
     Vg.global['change_node'][this.id] = true;
     Vg.global['is_update'] = true;
     return this;
 };
 BaseNode.prototype.setScale = function (f) {
-    this.width = this.originalWidth * f;
-    this.height = this.originalHeight * f;
+    this.scale_value = f;
+    this.width = this.originalWidth * this.scale_value;
+    this.height = this.originalHeight * this.scale_value;
+    if (this.node)this.node.scale.set(this.width, this.height, 1);
+    Vg.global['change_node'][this.id] = true;
     Vg.global['is_update'] = true;
     return this;
 };
@@ -255,6 +261,7 @@ BaseNode.prototype.setScale = function (f) {
 BaseNode.prototype.move_lock = false;
 BaseNode.prototype.animation_accuracy = 10;
 BaseNode.prototype.move = function (x, y, sec, call_back) {
+    if (!sec)sec = 0.5;
     if (this.move_lock == true)return;
     this.move_lock = true;
     var fdx = (x - this.x) / (sec * (1000));
@@ -276,18 +283,17 @@ BaseNode.prototype.move = function (x, y, sec, call_back) {
 
 BaseNode.prototype.scale_lock = false;
 BaseNode.prototype.scale = function (f, sec, call_back) {
+    if (!sec)sec = 0.5;
     if (this.scale_lock == true)return;
     this.scale_lock = true;
-    var fdw = (this.originalWidth * (f - 1)) / (sec * (1000));
-    var fdh = (this.originalHeight * (f - 1)) / (sec * (1000));
-    this.width = this.originalWidth;
-    this.height = this.originalHeight;
+    //this.width = this.originalWidth;
+    //this.height = this.originalHeight;
 
     var _this = this;
     var i = 0;
+    var sv = this.scale_value;
     var k = window.setInterval(function () {
-        _this.width = _this.width + fdw * _this.animation_accuracy;
-        _this.height = _this.height + fdh * _this.animation_accuracy;
+        _this.setScale(sv + ((f - sv) / (sec * (1000)) * i));
         i += _this.animation_accuracy;
         Vg.global['is_update'] = true;
         if (i > sec * 1000) {
@@ -306,7 +312,7 @@ BaseNode.prototype.click = function (call_back) {
 };
 
 BaseNode.prototype.remove = function () {
-    this.fun_remove(this.id);
+    if (this.fun_remove)this.fun_remove(this.id);
     Vg.global['is_update'] = true;
 };
 
@@ -325,15 +331,17 @@ BaseNode.prototype.setRemove = function (callback) {
 var Sprite = function (id, file) {
 
     this.id = id;
-    var textureLoader = new THREE.TextureLoader();
+    this.textureLoader = new THREE.TextureLoader();
     var _this = this;
-    textureLoader.load(file, function (t) {
+    this.scale_value = 1;
+    this.textureLoader.load(file, function (t) {
         var material = new THREE.SpriteMaterial({map: t});
         _this.node = new THREE.Sprite(material);
-        var width = material.map.image.width;
-        var height = material.map.image.height;
-        _this.node.scale.set(width, height, 1);
-        _this.setPosition(_this.x, _this.y, 1);
+        _this.originalWidth = _this.width = material.map.image.width;
+        _this.originalHeight = _this.height = material.map.image.height;
+        _this.setScale(_this.scale_value);
+        _this.setPosition(_this.x, _this.y);
+        _this.node.position.z = _this.id;
         Vg.global['scene'].add(_this.node);
     });
 
@@ -344,24 +352,47 @@ Sprite.prototype.type = "Sprite";
 Sprite.prototype.canvas = null;
 Sprite.prototype.img = null;
 
+//效率渣
 Sprite.prototype.setBackground = function (file) {
-    this.img.src = file;
+
+    var textureLoader = new THREE.TextureLoader();
+    var _this = this;
+    textureLoader.load(file, function (t) {
+        var material = new THREE.SpriteMaterial({map: t});
+        delete _this.node.material;
+        _this.node.material = material;
+    });
 };
 
 
 var LabelTTF = function (id, text, size, family, color) {
     this.id = id;
 
-    this.canvas = document.createElement('canvas');
-    this.context = this.canvas.getContext('2d');
-    this.canvas.width = Vg.global['width'];
-    this.canvas.height = Vg.global['height'];
-    this.height = size;
+    var _this = this;
+    var loader = new THREE.FontLoader();
+    color = 0xffffff
+    loader.load("http://threejs.org/examples/fonts/helvetiker_regular.typeface.js", function (response) {
+        console.log(response);
+        var textGeo = new THREE.TextGeometry(text, {
+            font: response,
+            size: size,
+            height: size,
+            curveSegments: 4,
+            bevelThickness: 2,
+            bevelSize: 1.5,
+            bevelEnabled: false,
+            material: 0,
+            extrudeMaterial: 1
+        });
+        var material = new THREE.MultiMaterial([
+            new THREE.MeshPhongMaterial({color: color, shading: THREE.FlatShading}), // front
+            new THREE.MeshPhongMaterial({color: color, shading: THREE.SmoothShading}) // side
+        ]);
+        _this.node = new THREE.Mesh(textGeo, material);
+        _this.setPosition(0, 0);
+        Vg.global['scene'].add(_this.node);
 
-    this.context.fillStyle = color;
-    this.context.font = size + "px " + family;
-    this.size = size;
-    this.setText(text);
+    });
 };
 
 LabelTTF.prototype = new BaseNode();
@@ -372,11 +403,7 @@ LabelTTF.prototype.text = "";
 LabelTTF.prototype.size = 0;
 LabelTTF.prototype.setText = function (text) {
     this.text = text;
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    var metrics = this.context.measureText(text);
-    this.width = metrics.width;
-    this.context.fillText(this.text, 0, this.size / 1.2);
-    Vg.global['is_update'] = true;
+
 };
 
 window.Vg = Vg;

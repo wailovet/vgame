@@ -149,7 +149,12 @@ Vg.prototype.addSprite = function (file) {
     var sprite = new Sprite(this.max_id, file);
     var _this = this;
     sprite.setRemove(function (id) {
-
+        for (var i = 0; i < _this.node_list.length; i++) {
+            if (id == _this.node_list[i].id) {
+                _this.node_list.splice(i, 1);
+                return;
+            }
+        }
     })
     this.node_list.push(sprite);
     return sprite;

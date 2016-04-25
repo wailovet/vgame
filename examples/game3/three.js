@@ -17126,7 +17126,7 @@ THREE.OrthographicCamera.prototype.toJSON = function ( meta ) {
  * @author tschw
  */
 
-THREE.PerspectiveCamera = function( fov, aspect, near, far ) {
+	THREE.PerspectiveCamera = function( fov, aspect, near, far ) {
 
 	THREE.Camera.call( this );
 

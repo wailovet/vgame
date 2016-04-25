@@ -471,7 +471,7 @@ function allBoxDown() {
             tmp = matrix[k][i];
             if (tmp != 0) {
                 if (tmp.stata == 1) {
-                    tmp.boxsp.setBackground("res/box_dj_" + tmp.num + ".png");
+                    //tmp.boxsp.setBackground("res/box_dj_" + tmp.num + ".png");
                 } else {
                     if (i == 0 || matrix[k][i - 1] != 0 && matrix[k][i - 1].stata != 0) {
 
@@ -580,7 +580,7 @@ function addBox(num, x, y) {
         if (this.stata == 0) {
             this.boxsp.setBackground("res/p" + this.num + ".png");
         } else {
-            this.boxsp.setBackground("res/box_dj_" + this.num + ".png");
+            this.boxsp.setBackground("res/p" + this.num + ".png");
         }
         this.boxsp.setScale(1.2);
         this.boxsp.scale(1, 0.2);
