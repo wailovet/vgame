@@ -146,8 +146,8 @@ Vg.prototype.addLabelTTF = function (text, size, family, color) {
     color = (color != null) ? color : "#ffffff";
     var labelTTF = new LabelTTF(this.max_id, text, size, family, color);
     var _this = this;
-    labelTTF.setRemove(function (id) {
-
+    labelTTF.setRemove(function () {
+        Vg.global['scene'].remove(this.node)
     })
     return labelTTF;
 };
@@ -368,31 +368,18 @@ Sprite.prototype.setBackground = function (file) {
 var LabelTTF = function (id, text, size, family, color) {
     this.id = id;
 
-    var _this = this;
-    var loader = new THREE.FontLoader();
-    color = 0xffffff
-    loader.load("http://threejs.org/examples/fonts/helvetiker_regular.typeface.js", function (response) {
-        console.log(response);
-        var textGeo = new THREE.TextGeometry(text, {
-            font: response,
-            size: size,
-            height: size,
-            curveSegments: 4,
-            bevelThickness: 2,
-            bevelSize: 1.5,
-            bevelEnabled: false,
-            material: 0,
-            extrudeMaterial: 1
-        });
-        var material = new THREE.MultiMaterial([
-            new THREE.MeshPhongMaterial({color: color, shading: THREE.FlatShading}), // front
-            new THREE.MeshPhongMaterial({color: color, shading: THREE.SmoothShading}) // side
-        ]);
-        _this.node = new THREE.Mesh(textGeo, material);
-        _this.setPosition(0, 0);
-        Vg.global['scene'].add(_this.node);
+    this.canvas = document.createElement('canvas');
+    this.context = this.canvas.getContext('2d');
+    this.canvas.width = Vg.global['width'];
+    this.canvas.height = Vg.global['height'];
+    this.height = size;
 
-    });
+    this.context.fillStyle = color;
+    this.context.font = size + "px " + family;
+    this.context.textAlign = 'center';
+    this.size = size;
+    this.setText(text);
+
 };
 
 LabelTTF.prototype = new BaseNode();
@@ -403,7 +390,39 @@ LabelTTF.prototype.text = "";
 LabelTTF.prototype.size = 0;
 LabelTTF.prototype.setText = function (text) {
     this.text = text;
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    var metrics = this.context.measureText(text);
+    this.width = metrics.width;
+    this.context.fillText(this.text, this.canvas.width / 2, this.canvas.height / 2);
 
+    var texture = new THREE.Texture(this.canvas);
+    texture.needsUpdate = true; // important!
+
+    var material = new THREE.SpriteMaterial({map: texture});
+
+    this.node = new THREE.Sprite(material);
+
+    this.originalWidth = this.width = material.map.image.width;
+    this.originalHeight = this.height = material.map.image.height;
+    this.setScale(this.scale_value);
+    this.setPosition(this.x, this.y);
+    this.node.position.z = this.id;
+    Vg.global['scene'].add(this.node);
+
+    //this.textureLoader = new THREE.TextureLoader();
+    //var _this = this;
+    //this.scale_value = 1;
+    //this.remove()
+    //this.textureLoader.load(this.canvas.toDataURL(), function (t) {
+    //    //var material = new THREE.SpriteMaterial({map: t});
+    //    //_this.node = new THREE.Sprite(material);
+    //    //_this.originalWidth = _this.width = material.map.image.width;
+    //    //_this.originalHeight = _this.height = material.map.image.height;
+    //    //_this.setScale(_this.scale_value);
+    //    //_this.setPosition(_this.x, _this.y);
+    //    //_this.node.position.z = _this.id;
+    //    //Vg.global['scene'].add(_this.node);
+    //});
 };
 
 window.Vg = Vg;
