@@ -57,8 +57,11 @@ Vg.prototype.run = function () {
     this.renderer.setSize(this.canvas_element.width, this.canvas_element.height);
     var _this = this;
     setInterval(function () {
-        _this.update();
-    }, Vg.global['animation_accuracy'])
+        if(Vg.global['is_update']){
+            Vg.global['is_update'] = false;
+            _this.update();
+        }
+    }, Vg.global['animation_accuracy']);
 
     if (this.run_zoom) {
         this.canvas_element.style.width = '100%';
@@ -123,6 +126,7 @@ Vg.prototype.addUpdate = function (name, interval, call_back) {
 };
 Vg.prototype.stopUpdate = function (name) {
     clearInterval(this.allUpdate[name]);
+    delete(this.allUpdate[name]);
 }
 
 
@@ -145,10 +149,10 @@ Vg.prototype.addLabelTTF = function (text, size, family, color) {
     size = (size != '') ? size : 24;
     color = (color != null) ? color : "#ffffff";
     var labelTTF = new LabelTTF(this.max_id, text, size, family, color);
-    var _this = this;
+
     labelTTF.setRemove(function () {
-        Vg.global['scene'].remove(this.node)
-    })
+        Vg.global['scene'].remove(this.node);
+    });
     return labelTTF;
 };
 
@@ -317,7 +321,6 @@ BaseNode.prototype.remove = function () {
 };
 
 BaseNode.prototype.setOpacity = function (f) {
-    this.context.globalAlpha = f;
     Vg.global['is_update'] = true;
 };
 
@@ -377,7 +380,15 @@ var LabelTTF = function (id, text, size, family, color) {
     this.context.fillStyle = color;
     this.context.font = size + "px " + family;
     this.context.textAlign = 'center';
+    this.context.textBaseline = 'middle';
     this.size = size;
+
+    this.originalWidth = this.width = Vg.global['width'];
+    this.originalHeight = this.height = Vg.global['height'];
+
+    this.scale_value = 1;
+
+
     this.setText(text);
 
 };
@@ -389,40 +400,23 @@ LabelTTF.prototype.canvas = null;
 LabelTTF.prototype.text = "";
 LabelTTF.prototype.size = 0;
 LabelTTF.prototype.setText = function (text) {
+    this.remove();
+    delete this.node
     this.text = text;
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    var metrics = this.context.measureText(text);
-    this.width = metrics.width;
     this.context.fillText(this.text, this.canvas.width / 2, this.canvas.height / 2);
 
-    var texture = new THREE.Texture(this.canvas);
-    texture.needsUpdate = true; // important!
+    var texture = new THREE.CanvasTexture(this.canvas);
 
     var material = new THREE.SpriteMaterial({map: texture});
 
     this.node = new THREE.Sprite(material);
-
-    this.originalWidth = this.width = material.map.image.width;
-    this.originalHeight = this.height = material.map.image.height;
+    //
+    this.node.position.z = this.id;
     this.setScale(this.scale_value);
     this.setPosition(this.x, this.y);
-    this.node.position.z = this.id;
     Vg.global['scene'].add(this.node);
 
-    //this.textureLoader = new THREE.TextureLoader();
-    //var _this = this;
-    //this.scale_value = 1;
-    //this.remove()
-    //this.textureLoader.load(this.canvas.toDataURL(), function (t) {
-    //    //var material = new THREE.SpriteMaterial({map: t});
-    //    //_this.node = new THREE.Sprite(material);
-    //    //_this.originalWidth = _this.width = material.map.image.width;
-    //    //_this.originalHeight = _this.height = material.map.image.height;
-    //    //_this.setScale(_this.scale_value);
-    //    //_this.setPosition(_this.x, _this.y);
-    //    //_this.node.position.z = _this.id;
-    //    //Vg.global['scene'].add(_this.node);
-    //});
 };
 
 window.Vg = Vg;

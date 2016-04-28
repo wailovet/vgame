@@ -383,6 +383,7 @@ var LabelTTF = function (id, text, size, family, color) {
 
     this.canvas = document.createElement('canvas');
     this.context = this.canvas.getContext('2d');
+    this.context.textAlign = 'center';
     this.canvas.width = Vg.global['width'];
     this.canvas.height = Vg.global['height'];
     this.height = size;
